@@ -13,9 +13,37 @@ namespace OmniSpec.App.ViewModels;
 /// <summary>One value on the overlay, e.g. "62 °C".</summary>
 public sealed partial class OverlayValue : ObservableObject
 {
-    public OverlayValue(string key, string unit, bool isPrimary = false) { Key = key; Unit = unit; IsPrimary = isPrimary; }
+    /// <summary>
+    /// Normal-state colors by kind of value. Yellow/orange/red are deliberately not used so that the amber/red
+    /// warning colors stay unmistakable; temperatures are a cool teal while they are fine.
+    /// </summary>
+    private static readonly Dictionary<string, System.Windows.Media.Color> KindColors = new()
+    {
+        ["fps"] = System.Windows.Media.Color.FromRgb(0x7C, 0xFC, 0x9A),
+        ["fpsstat"] = System.Windows.Media.Color.FromRgb(0xB7, 0xF7, 0xC8),
+        ["frametime"] = System.Windows.Media.Color.FromRgb(0xD9, 0xF9, 0xE1),
+        ["usage"] = System.Windows.Media.Color.FromRgb(0x7D, 0xD3, 0xFC),
+        ["temp"] = System.Windows.Media.Color.FromRgb(0x5E, 0xEA, 0xD4),
+        ["clock"] = System.Windows.Media.Color.FromRgb(0xC4, 0xB5, 0xFD),
+        ["power"] = System.Windows.Media.Color.FromRgb(0xF9, 0xA8, 0xD4),
+        ["fan"] = System.Windows.Media.Color.FromRgb(0xA5, 0xB4, 0xFC),
+        ["memory"] = System.Windows.Media.Color.FromRgb(0xF0, 0xAB, 0xFC),
+        ["text"] = System.Windows.Media.Colors.White,
+    };
+
+    private static readonly Dictionary<string, System.Windows.Media.SolidColorBrush> Brushes =
+        KindColors.ToDictionary(kv => kv.Key, kv => { var b = new System.Windows.Media.SolidColorBrush(kv.Value); b.Freeze(); return b; });
+
+    public OverlayValue(string key, string unit, string kind, bool isPrimary = false) { Key = key; Unit = unit; Kind = kind; IsPrimary = isPrimary; }
     public string Key { get; }
+    public string Kind { get; }
     public bool IsPrimary { get; }
+
+    /// <summary>Normal-state value color (white when "colorful values" is off).</summary>
+    [ObservableProperty] private System.Windows.Media.Brush _valueBrush = System.Windows.Media.Brushes.White;
+
+    public void ApplyColor(bool colorful) =>
+        ValueBrush = colorful || IsPrimary ? Brushes.GetValueOrDefault(Kind, Brushes["text"]) : Brushes["text"];
     [ObservableProperty] private string _text = string.Empty;
     [ObservableProperty] private string _unit;
     [ObservableProperty] private bool _isVisible;
@@ -76,34 +104,37 @@ public sealed partial class OverlayViewModel : ObservableObject
         }
 
         Row("FPS", "Brush.Series3",
-            new OverlayValue("fps", "FPS", isPrimary: true),
-            new OverlayValue("onepercent", "1% low"),
-            new OverlayValue("pointone", "0.1% low"),
-            new OverlayValue("frametime", "ms"));
+            new OverlayValue("fps", "FPS", "fps", isPrimary: true),
+            new OverlayValue("avgfps", "avg", "fpsstat"),
+            new OverlayValue("onepercent", "1% low", "fpsstat"),
+            new OverlayValue("pointone", "0.1% low", "fpsstat"),
+            new OverlayValue("frametime", "ms", "frametime"));
         Row("GPU", "Brush.Series2",
-            new OverlayValue("gpuload", "%"),
-            new OverlayValue("gputemp", "°C"),
-            new OverlayValue("gpuhotspot", "°C hot spot"),
-            new OverlayValue("gpuclock", "MHz"),
-            new OverlayValue("gpupower", "W"),
-            new OverlayValue("gpufan", "RPM"));
+            new OverlayValue("gpuload", "%", "usage"),
+            new OverlayValue("gputemp", "°C", "temp"),
+            new OverlayValue("gpuhotspot", "°C hot spot", "temp"),
+            new OverlayValue("gpuclock", "MHz", "clock"),
+            new OverlayValue("gpupower", "W", "power"),
+            new OverlayValue("gpufan", "RPM", "fan"),
+            new OverlayValue("vram", "GB VRAM", "memory"));
         Row("CPU", "Brush.Accent",
-            new OverlayValue("cpuload", "%"),
-            new OverlayValue("cputemp", "°C"),
-            new OverlayValue("cpuclock", "MHz"),
-            new OverlayValue("cpupower", "W"));
+            new OverlayValue("cpuload", "%", "usage"),
+            new OverlayValue("cputemp", "°C", "temp"),
+            new OverlayValue("cpuclock", "MHz", "clock"),
+            new OverlayValue("cpupower", "W", "power"));
         Row("MEM", "Brush.Series4",
-            new OverlayValue("ram", "GB RAM"),
-            new OverlayValue("vram", "GB VRAM"));
-        Row("", "Brush.TextMuted",
-            new OverlayValue("app", ""),
-            new OverlayValue("time", ""));
+            new OverlayValue("ram", "GB RAM", "memory"));
+        Row("GAME", "Brush.TextSecondary",
+            new OverlayValue("app", "", "text"));
+        Row("TIME", "Brush.TextSecondary",
+            new OverlayValue("time", "", "text"));
     }
 
     private void ApplySettings()
     {
         IsHorizontal = S.Layout == "Horizontal";
         Scale = S.Scale;
+        foreach (var v in _values.Values) v.ApplyColor(S.ColorfulValues);
         if (_monitoring.Latest is { } live) Update(live);
     }
 
@@ -127,6 +158,7 @@ public sealed partial class OverlayViewModel : ObservableObject
         // ---- Frame rate
         var current = session?.CurrentFps;
         Set("fps", current is double f ? $"{f:0}" : null);
+        Set("avgfps", session?.AverageFps is double avg ? $"{avg:0}" : null);
         var recent = session?.RecentStatistics(1000);
         var enough = recent is { FrameCount: > 30 };
         Set("onepercent", enough ? $"{recent!.OnePercentLowFps:0}" : null);
@@ -226,12 +258,12 @@ public sealed partial class OverlayPageViewModel : PageViewModel
         _controller = controller;
         var labels = new Dictionary<string, (string Label, string Group)>
         {
-            ["fps"] = ("Current FPS", "Frame rate"), ["onepercent"] = ("1% low FPS", "Frame rate"), ["pointone"] = ("0.1% low FPS", "Frame rate"),
+            ["fps"] = ("Current FPS", "Frame rate"), ["avgfps"] = ("Average FPS", "Frame rate"), ["onepercent"] = ("1% low FPS", "Frame rate"), ["pointone"] = ("0.1% low FPS", "Frame rate"),
             ["frametime"] = ("Frame time", "Frame rate"), ["frametimegraph"] = ("Frame-time graph", "Frame rate"),
             ["gpuload"] = ("GPU usage", "GPU"), ["gputemp"] = ("GPU temperature", "GPU"), ["gpuhotspot"] = ("GPU hot spot", "GPU"),
             ["gpuclock"] = ("GPU core clock", "GPU"), ["gpupower"] = ("GPU power", "GPU"), ["gpufan"] = ("GPU fan speed", "GPU"),
             ["cpuload"] = ("CPU usage", "CPU"), ["cputemp"] = ("CPU temperature", "CPU"), ["cpuclock"] = ("CPU clock", "CPU"), ["cpupower"] = ("CPU power", "CPU"),
-            ["ram"] = ("RAM in use", "Memory"), ["vram"] = ("VRAM in use", "Memory"),
+            ["vram"] = ("VRAM in use", "GPU"), ["ram"] = ("RAM in use", "Memory"),
             ["app"] = ("Game name", "Other"), ["time"] = ("Clock", "Other"),
         };
         Groups = OverlaySettings.AllItems
@@ -269,6 +301,7 @@ public sealed partial class OverlayPageViewModel : PageViewModel
     public double Opacity { get => S.Opacity; set => Change(() => S.Opacity = value); }
     public double Scale { get => S.Scale; set => Change(() => S.Scale = value); }
     public bool ColorWarnings { get => S.ColorWarnings; set => Change(() => S.ColorWarnings = value); }
+    public bool ColorfulValues { get => S.ColorfulValues; set => Change(() => S.ColorfulValues = value); }
 
     public string ExcludedAppsText
     {

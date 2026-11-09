@@ -46,7 +46,15 @@ public partial class App : Application
     {
         base.OnStartup(e);
         var args = e.Args.Select(a => a.ToLowerInvariant()).ToHashSet();
-        var paths = new AppPaths();
+        var screenshotMode = false;
+#if DEBUG
+        // Development screenshot mode is fully isolated: throwaway data folder and no single-instance lock,
+        // so it never interferes with a running OmniSpec or the user's real settings.
+        screenshotMode = e.Args.Any(a => a.StartsWith("--screenshot=", StringComparison.OrdinalIgnoreCase));
+#endif
+        var paths = screenshotMode
+            ? new AppPaths(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "OmniSpec-screenshot"))
+            : new AppPaths();
 
         // Installer / settings hooks for the optional "always run as administrator" scheduled task.
         if (args.Contains(ElevatedLaunch.RegisterArg))
@@ -62,7 +70,7 @@ public partial class App : Application
         }
 
         var fromTask = args.Contains(ElevatedLaunch.FromTaskArg);
-        if (!AcquireSingleInstance(waitForPrevious: args.Contains("--restarted") || fromTask))
+        if (!screenshotMode && !AcquireSingleInstance(waitForPrevious: args.Contains("--restarted") || fromTask))
         {
             Shutdown();
             return;

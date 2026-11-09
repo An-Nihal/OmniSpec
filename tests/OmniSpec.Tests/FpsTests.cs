@@ -169,3 +169,17 @@ public class FpsProviderAvailabilityTests
         }
     }
 }
+
+public class FpsSessionAverageTests
+{
+    [Fact]
+    public void Average_fps_covers_the_whole_session()
+    {
+        var session = new FpsSession(1, "game");
+        Assert.Null(session.AverageFps);
+        FrameSample F(double ms) => new(double.NaN, ms, null, null, null, null, null, null, false, null, null, null);
+        session.Add(Enumerable.Repeat(F(10), 100).ToList());   // 100 FPS for 1 s
+        session.Add(Enumerable.Repeat(F(20), 50).ToList());    // 50 FPS for 1 s
+        Assert.Equal(75, session.AverageFps!.Value, 6);        // 150 frames / 2 s
+    }
+}

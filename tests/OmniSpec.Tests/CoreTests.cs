@@ -312,3 +312,19 @@ public class OverlayLogicTests
         Assert.Equal("Ctrl+Shift+O", s.Hotkey);
     }
 }
+
+public class SettingsMigrationTests
+{
+    [Fact]
+    public void Upgrade_from_v1_enables_average_fps_once()
+    {
+        var s = new AppSettings { SchemaVersion = 1 };
+        s.Overlay.Items = ["fps", "gputemp"];
+        s.Normalize();
+        Assert.Equal(["fps", "avgfps", "gputemp"], s.Overlay.Items);
+        Assert.Equal(2, s.SchemaVersion);
+        s.Overlay.Items = ["fps"];                // user later turns it off
+        s.Normalize();
+        Assert.Equal(["fps"], s.Overlay.Items);   // not re-added
+    }
+}

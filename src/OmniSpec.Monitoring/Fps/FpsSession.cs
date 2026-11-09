@@ -12,6 +12,8 @@ public sealed class FpsSession
     private readonly Queue<(double End, double FrameTime)> _window = new();
     private double _timeline; // seconds, cumulative frame time
     private double _windowSum;
+    private long _totalFrames; // whole session, not trimmed by MaxFrames
+    private double _totalFrameTimeMs;
 
     public FpsSession(int processId, string processName)
     {
@@ -39,6 +41,8 @@ public sealed class FpsSession
             {
                 if (f.FrameTimeMs <= 0 || !double.IsFinite(f.FrameTimeMs)) continue;
                 _timeline += f.FrameTimeMs / 1000.0;
+                _totalFrames++;
+                _totalFrameTimeMs += f.FrameTimeMs;
                 var stamped = double.IsFinite(f.TimeSeconds) ? f : f with { TimeSeconds = _timeline };
                 _frames.Add(stamped);
                 _window.Enqueue((_timeline, f.FrameTimeMs));
@@ -59,6 +63,12 @@ public sealed class FpsSession
         {
             lock (_gate) return _window.Count < 2 || _windowSum <= 0 ? null : 1000.0 * _window.Count / _windowSum;
         }
+    }
+
+    /// <summary>Average FPS over the whole session (frames ÷ total frame time), or null before any frames arrive.</summary>
+    public double? AverageFps
+    {
+        get { lock (_gate) return _totalFrames == 0 || _totalFrameTimeMs <= 0 ? null : 1000.0 * _totalFrames / _totalFrameTimeMs; }
     }
 
     public double? LastFrameTimeMs

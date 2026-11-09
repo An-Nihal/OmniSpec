@@ -5,6 +5,18 @@ All notable changes to OmniSpec are documented in this file. The format follows
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-10
+
+### Added
+- **Overlay: Average FPS**, over the whole capture session. It is turned on automatically if you already show FPS.
+- **Overlay: colorful values.** Usage, temperature, clock, power, fan and memory each have their own color.
+  Temperatures are teal while normal and turn amber/red near your alert limits. This can be switched off.
+
+### Changed
+- **Overlay: VRAM** moved to the GPU row (and to the GPU group on the settings page). The MEM row now shows system RAM.
+- **Overlay: separate rows.** Game name and clock have their own labelled rows: GAME and TIME.
+- **Developer screenshot mode** (Debug builds only) is now isolated from a running OmniSpec and from user settings.
+
 ## [1.1.1] - 2026-11-10
 
 ### Changed
@@ -84,7 +96,8 @@ All notable changes to OmniSpec are documented in this file. The format follows
   - **Installer:** an Inno Setup installer.
   - **Artifacts:** a portable zip and SHA-256 checksums.
 
-[Unreleased]: https://github.com/An-Nihal/OmniSpec/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/An-Nihal/OmniSpec/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/An-Nihal/OmniSpec/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/An-Nihal/OmniSpec/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/An-Nihal/OmniSpec/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/An-Nihal/OmniSpec/releases/tag/v1.0.0

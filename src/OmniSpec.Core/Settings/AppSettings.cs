@@ -5,7 +5,7 @@ public enum AppTheme { Dark, Light }
 /// <summary>User settings persisted as JSON. All properties have safe defaults so partial/old files load correctly.</summary>
 public sealed class AppSettings
 {
-    public int SchemaVersion { get; set; } = 1;
+    public int SchemaVersion { get; set; } = 2;
 
     // Appearance
     public AppTheme Theme { get; set; } = AppTheme.Dark;
@@ -70,6 +70,13 @@ public sealed class AppSettings
         Alerts ??= new();
         Fps ??= new();
         Overlay = (Overlay ?? new()).Normalize();
+        // One-time upgrade from settings v1: enable the new "Average FPS" overlay item for users who show FPS.
+        if (SchemaVersion < 2)
+        {
+            if (Overlay.Items.Contains("fps") && !Overlay.Items.Contains("avgfps"))
+                Overlay.Items = OverlaySettings.AllItems.Where(i => i == "avgfps" || Overlay.Items.Contains(i)).ToList();
+            SchemaVersion = 2;
+        }
         SensorLimits ??= new();
         Widget.Opacity = Math.Clamp(Widget.Opacity, 0.2, 1.0);
         Widget.Metrics ??= WidgetSettings.DefaultMetrics.ToList();
@@ -122,15 +129,15 @@ public sealed class OverlaySettings
     /// <summary>Every item the overlay can show, in display order.</summary>
     public static readonly string[] AllItems =
     [
-        "fps", "onepercent", "pointone", "frametime", "frametimegraph",
-        "gpuload", "gputemp", "gpuhotspot", "gpuclock", "gpupower", "gpufan",
+        "fps", "avgfps", "onepercent", "pointone", "frametime", "frametimegraph",
+        "gpuload", "gputemp", "gpuhotspot", "gpuclock", "gpupower", "gpufan", "vram",
         "cpuload", "cputemp", "cpuclock", "cpupower",
-        "ram", "vram",
+        "ram",
         "app", "time",
     ];
 
     public static readonly string[] DefaultItems =
-        ["fps", "onepercent", "frametime", "frametimegraph", "gpuload", "gputemp", "cpuload", "cputemp", "ram", "vram"];
+        ["fps", "avgfps", "onepercent", "frametime", "frametimegraph", "gpuload", "gputemp", "vram", "cpuload", "cputemp", "ram"];
 
     public static readonly string[] Modes = ["Games", "Always", "Manual"];
     public static readonly string[] Corners = ["TopLeft", "TopRight", "BottomLeft", "BottomRight"];
@@ -156,6 +163,8 @@ public sealed class OverlaySettings
     public double Opacity { get; set; } = 0.9;
     public double Scale { get; set; } = 1.0;
     public bool ColorWarnings { get; set; } = true;
+    /// <summary>Color values by type (usage, temperature, clock, power, …) instead of plain white.</summary>
+    public bool ColorfulValues { get; set; } = true;
     public List<string> Items { get; set; } = DefaultItems.ToList();
     public List<string> ExcludedApps { get; set; } = DefaultExcludedApps.ToList();
     /// <summary>Programs always treated as games, even when not fullscreen.</summary>
