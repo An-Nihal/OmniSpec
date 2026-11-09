@@ -1,0 +1,217 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release without the leading "v" (e.g. 1.0.1). Leave empty when running on a tag.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Compute version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          $version = $env:INPUT_VERSION
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            if ($env:REF_TYPE -ne 'tag') {
+              throw "No version given. Run this workflow on a 'v*' tag or provide the 'version' input."
+            }
+            $version = $env:REF_NAME
+          }
+          $version = $version.Trim() -replace '^[vV]', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$') {
+            throw "'$version' is not a valid semantic version."
+          }
+          Write-Host "Releasing OmniSpec $version"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=v$version" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore OmniSpec.slnx
+
+      # Tests run in Debug: the development-only mock provider is compiled only in Debug builds.
+      - name: Test (Debug)
+        run: >
+          dotnet test OmniSpec.slnx -c Debug
+          --filter "Category!=Hardware"
+          --logger "trx;LogFilePrefix=results"
+          --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+          if-no-files-found: warn
+
+      - name: Publish single-file exe
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: >
+          dotnet publish src/OmniSpec.App/OmniSpec.App.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          "-p:Version=$env:VERSION"
+          -o publish/win-x64
+
+      - name: Bundle Intel PresentMon (MIT) for FPS capture
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Pinned official release + SHA-256 so the bundled binary is exactly the one that was reviewed.
+          $version = '2.6.0'
+          $sha256  = 'b2a706bc6ad475749e3b7e3409263aa1e6906d45bdcf993f6dbc0f660188f1af'
+          $tools   = Join-Path $env:GITHUB_WORKSPACE 'publish/win-x64/tools'
+          New-Item -ItemType Directory -Force -Path $tools | Out-Null
+          $exe = Join-Path $tools "PresentMon-$version-x64.exe"
+          Invoke-WebRequest "https://github.com/GameTechDev/PresentMon/releases/download/v$version/PresentMon-$version-x64.exe" -OutFile $exe
+          $actual = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $sha256) { throw "PresentMon hash mismatch: $actual" }
+          Invoke-WebRequest "https://raw.githubusercontent.com/GameTechDev/PresentMon/v$version/LICENSE.txt" -OutFile (Join-Path $tools 'PresentMon-LICENSE.txt')
+          Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'publish/win-x64') -Filter *.pdb | Remove-Item
+
+      - name: Package standalone exe and portable zip
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version   = $env:VERSION
+          $root      = $env:GITHUB_WORKSPACE
+          $publish   = Join-Path $root 'publish/win-x64'
+          $artifacts = Join-Path $root 'artifacts'
+          New-Item -ItemType Directory -Force -Path $artifacts | Out-Null
+
+          $exe = Join-Path $publish 'OmniSpec.exe'
+          if (-not (Test-Path $exe)) { throw "Published executable not found: $exe" }
+
+          foreach ($doc in 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'README.md') {
+            if (-not (Test-Path (Join-Path $root $doc))) { throw "Required file '$doc' is missing from the repository." }
+          }
+
+          # Portable zip: OmniSpec.exe + tools\PresentMon + portable.txt (enables portable mode) + license and docs
+          $staging = Join-Path $env:RUNNER_TEMP 'portable'
+          Remove-Item $staging -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $staging | Out-Null
+          Copy-Item (Join-Path $publish '*') $staging -Recurse
+          @(
+            'This file enables OmniSpec portable mode.'
+            'While portable.txt is next to OmniSpec.exe, settings and logs are stored in the "data" folder beside the exe'
+            'instead of %LOCALAPPDATA%\OmniSpec. Delete this file to use the normal per-user location.'
+          ) | Set-Content -Path (Join-Path $staging 'portable.txt') -Encoding utf8
+          foreach ($doc in 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'README.md') {
+            Copy-Item (Join-Path $root $doc) $staging
+          }
+          Compress-Archive -Path (Join-Path $staging '*') `
+            -DestinationPath (Join-Path $artifacts "OmniSpec-$version-win-x64-portable.zip") -Force
+
+      - name: Install Inno Setup
+        run: |
+          $iscc = Get-Command iscc -ErrorAction SilentlyContinue
+          if (-not $iscc) {
+            $candidates = @(
+              "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+              "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+            )
+            $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+            if (-not $found) {
+              choco install innosetup -y --no-progress
+              if ($LASTEXITCODE -ne 0) { throw "choco install innosetup failed with exit code $LASTEXITCODE" }
+              $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+            }
+            if (-not $found) { throw 'ISCC.exe not found after installing Inno Setup.' }
+            Split-Path $found -Parent >> $env:GITHUB_PATH
+            Write-Host "Using $found"
+          } else {
+            Write-Host "Using $($iscc.Source)"
+          }
+
+      - name: Build installer
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $root      = $env:GITHUB_WORKSPACE
+          $publish   = Join-Path $root 'publish\win-x64'
+          $artifacts = Join-Path $root 'artifacts'
+          iscc "/DAppVersion=$env:VERSION" "/DSourceDir=$publish" "/DOutputDir=$artifacts" (Join-Path $root 'installer\OmniSpec.iss')
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+          $setup = Join-Path $artifacts "OmniSpec-$env:VERSION-win-x64-setup.exe"
+          if (-not (Test-Path $setup)) { throw "Installer not found: $setup" }
+
+      - name: Write SHA256SUMS.txt
+        run: |
+          $artifacts = Join-Path $env:GITHUB_WORKSPACE 'artifacts'
+          $lines = Get-ChildItem -Path $artifacts -File |
+            Where-Object { $_.Name -ne 'SHA256SUMS.txt' } |
+            Sort-Object Name |
+            ForEach-Object { '{0}  {1}' -f (Get-FileHash -Algorithm SHA256 -Path $_.FullName).Hash.ToLowerInvariant(), $_.Name }
+          # sha256sum format: lowercase hex, two spaces, file name; LF line endings, no BOM
+          [System.IO.File]::WriteAllText((Join-Path $artifacts 'SHA256SUMS.txt'), (($lines -join "`n") + "`n"), [System.Text.UTF8Encoding]::new($false))
+          Get-Content (Join-Path $artifacts 'SHA256SUMS.txt')
+
+      - name: Extract release notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $version = $env:VERSION
+          $notes = @()
+          if (Test-Path CHANGELOG.md) {
+            $inSection = $false
+            foreach ($line in Get-Content CHANGELOG.md -Encoding utf8) {
+              if ($line.StartsWith('## [')) {
+                if ($inSection) { break }
+                if ($line.StartsWith("## [$version]")) { $inSection = $true; continue }
+              }
+              if ($inSection) { $notes += $line }
+            }
+          }
+          $body = ($notes -join "`n").Trim()
+          if ([string]::IsNullOrWhiteSpace($body)) {
+            $body = "OmniSpec $version.`n`nSee CHANGELOG.md for details."
+          }
+          $body += "`n`nVerify downloads with the SHA-256 checksums in SHA256SUMS.txt."
+          Set-Content -Path release-notes.md -Value $body -Encoding utf8
+          Get-Content release-notes.md
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: OmniSpec ${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          files: artifacts/*
+          draft: ${{ github.event_name == 'workflow_dispatch' }}
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          fail_on_unmatched_files: true

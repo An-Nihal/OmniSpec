@@ -1,0 +1,75 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore OmniSpec.slnx
+
+      - name: Build (Release)
+        run: dotnet build OmniSpec.slnx -c Release --no-restore
+
+      # Tests run in Debug: the development-only mock provider is compiled only in Debug builds.
+      # Tests that need physical hardware are excluded.
+      - name: Test (Debug)
+        run: >
+          dotnet test OmniSpec.slnx -c Debug
+          --filter "Category!=Hardware"
+          --logger "trx;LogFilePrefix=results"
+          --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+          if-no-files-found: warn
+
+      - name: Publish portable single-file exe
+        run: >
+          dotnet publish src/OmniSpec.App/OmniSpec.App.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:Version=0.0.0-ci.${{ github.run_number }}
+          -o publish/win-x64
+
+      - name: Upload published exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmniSpec-0.0.0-ci.${{ github.run_number }}-win-x64
+          path: publish/win-x64/
+          if-no-files-found: error
