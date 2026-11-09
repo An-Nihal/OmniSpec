@@ -1,0 +1,81 @@
+## .NET / Visual Studio / Rider ignores
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.rsuser
+*.userprefs
+*.VC.db
+*.VC.VC.opendb
+*.ncrunch*
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.localhistory/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# VS Code (shared settings may be committed deliberately)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+
+# Test results / coverage
+[Tt]est[Rr]esult*/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# Publish output and release packaging
+publish/
+artifacts/
+*.zip
+*.pubxml.user
+
+# OmniSpec portable-mode data folder (settings/logs written beside the exe)
+data/
+
+# Misc
+*.log
+*.tmp
+*.binlog
+~$*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

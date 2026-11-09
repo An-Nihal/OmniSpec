@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>OmniSpec</AssemblyName>
+    <RootNamespace>OmniSpec.App</RootNamespace>
+    <ApplicationIcon>Assets\omnispec.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Title>OmniSpec — Your Entire PC. One Clear View.</Title>
+    <Description>OmniSpec system intelligence and hardware monitoring</Description>
+    <!-- Publishing defaults for the portable self-contained build -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- WinForms is used only for the tray icon; DPI awareness is declared in app.manifest for WPF. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+
+  <!-- WinForms is only used for the tray icon; avoid ambiguous type names with WPF. -->
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <!-- License texts ship next to OmniSpec.exe (installer and portable zip). -->
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\omnispec.ico" />
+    <Resource Include="Assets\omnispec-256.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OmniSpec.Core\OmniSpec.Core.csproj" />
+    <ProjectReference Include="..\OmniSpec.Hardware\OmniSpec.Hardware.csproj" />
+    <ProjectReference Include="..\OmniSpec.SystemInformation\OmniSpec.SystemInformation.csproj" />
+    <ProjectReference Include="..\OmniSpec.Monitoring\OmniSpec.Monitoring.csproj" />
+    <ProjectReference Include="..\OmniSpec.Infrastructure\OmniSpec.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

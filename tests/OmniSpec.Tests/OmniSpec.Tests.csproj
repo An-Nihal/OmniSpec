@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- The development-only mock provider is excluded from Release builds of OmniSpec.Hardware,
+       so the test project compiles it directly. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <Compile Include="..\..\src\OmniSpec.Hardware\Mock\*.cs" Link="Mock\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\OmniSpec.Core\OmniSpec.Core.csproj" />
+    <ProjectReference Include="..\..\src\OmniSpec.Hardware\OmniSpec.Hardware.csproj" />
+    <ProjectReference Include="..\..\src\OmniSpec.SystemInformation\OmniSpec.SystemInformation.csproj" />
+    <ProjectReference Include="..\..\src\OmniSpec.Monitoring\OmniSpec.Monitoring.csproj" />
+    <ProjectReference Include="..\..\src\OmniSpec.Infrastructure\OmniSpec.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

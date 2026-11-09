@@ -1,0 +1,112 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:conv="clr-namespace:OmniSpec.App.Converters"
+                    xmlns:vm="clr-namespace:OmniSpec.App.ViewModels">
+
+    <conv:StateToBrushConverter x:Key="StateBrush" />
+    <conv:HealthToBrushConverter x:Key="HealthBrush" />
+    <conv:LoadToBrushConverter x:Key="LoadBrush" />
+    <conv:BoolToVisibilityConverter x:Key="Visible" />
+    <conv:BoolToVisibilityConverter x:Key="Collapsed" Invert="True" />
+    <conv:EqualsConverter x:Key="Equals" />
+    <conv:NanToZeroConverter x:Key="NanZero" />
+    <conv:InfoValueConverter x:Key="InfoValue" />
+
+    <ItemsPanelTemplate x:Key="WrapPanel">
+        <WrapPanel Orientation="Horizontal" />
+    </ItemsPanelTemplate>
+
+    <!-- Metric tile: label, large value colored by state, optional sub-text. Tooltip shows the data source. -->
+    <DataTemplate x:Key="TileTemplate" DataType="{x:Type vm:ValueRow}">
+        <Border Style="{StaticResource Tile}" ToolTip="{Binding ToolTipText}" Width="178">
+            <StackPanel>
+                <TextBlock Text="{Binding Label}" Style="{StaticResource Text.Label}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Value}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"
+                           Foreground="{Binding State, Converter={StaticResource StateBrush}}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource Text.ValueSmall}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding State}" Value="PermissionRequired"><Setter Property="FontSize" Value="13.5" /></DataTrigger>
+                                <DataTrigger Binding="{Binding State}" Value="Unsupported"><Setter Property="FontSize" Value="13.5" /></DataTrigger>
+                                <DataTrigger Binding="{Binding State}" Value="Unavailable"><Setter Property="FontSize" Value="13.5" /></DataTrigger>
+                                <DataTrigger Binding="{Binding State}" Value="Error"><Setter Property="FontSize" Value="13.5" /></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding Sub}" Style="{StaticResource Text.Caption}" Visibility="{Binding Sub, Converter={StaticResource Visible}}" />
+            </StackPanel>
+        </Border>
+    </DataTemplate>
+
+    <!-- Detail row: label on the left, value on the right. Tooltip shows the source. -->
+    <DataTemplate x:Key="RowTemplate" DataType="{x:Type vm:ValueRow}">
+        <Grid Margin="0,4" ToolTip="{Binding ToolTipText}" Background="Transparent">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="140" />
+                <ColumnDefinition Width="1.4*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding Label}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,0,12,0" />
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="{Binding Value}" TextWrapping="Wrap" Style="{StaticResource Text.Base}"
+                           Foreground="{Binding State, Converter={StaticResource StateBrush}}" />
+                <TextBlock Text="{Binding Sub}" Style="{StaticResource Text.Caption}" Visibility="{Binding Sub, Converter={StaticResource Visible}}" />
+            </StackPanel>
+        </Grid>
+    </DataTemplate>
+
+    <Style x:Key="Tiles" TargetType="ItemsControl">
+        <Setter Property="ItemsPanel" Value="{StaticResource WrapPanel}" />
+        <Setter Property="ItemTemplate" Value="{StaticResource TileTemplate}" />
+    </Style>
+    <Style x:Key="Rows" TargetType="ItemsControl">
+        <Setter Property="ItemTemplate" Value="{StaticResource RowTemplate}" />
+    </Style>
+
+    <Style x:Key="PageScroll" TargetType="ScrollViewer">
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="Padding" Value="24,8,12,24" />
+    </Style>
+
+    <!-- Navigation list item -->
+    <Style x:Key="NavItem" TargetType="ListBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Margin" Value="10,1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="8" Padding="12,8">
+                        <Grid>
+                            <Border x:Name="Pill" Width="3" Height="16" CornerRadius="2" HorizontalAlignment="Left" Margin="-10,0,0,0"
+                                    Background="{DynamicResource Brush.Accent}" Visibility="Collapsed" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="Icon" Text="{Binding Icon}" FontFamily="{StaticResource Font.Icons}" FontSize="16"
+                                           Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                <TextBlock Text="{Binding Title}" FontSize="13.5" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.SurfaceHover}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.SurfaceAlt}" />
+                            <Setter TargetName="Pill" Property="Visibility" Value="Visible" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+                            <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Chart card header: title + stats -->
+    <Style x:Key="ChartTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.H3}">
+        <Setter Property="Margin" Value="0,0,0,2" />
+    </Style>
+</ResourceDictionary>

@@ -1,0 +1,97 @@
+name: Hardware support (sensor missing or wrong)
+description: A sensor is missing, shows the wrong value, or your hardware is not recognised.
+title: "[Hardware]: "
+labels: ["hardware"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve hardware coverage.
+        Please attach the TXT report exported from **OmniSpec › Export**. It lets us see exactly which sensors were detected and their states.
+        **Remove serial numbers and any other personal information from the report before attaching it.**
+
+  - type: input
+    id: version
+    attributes:
+      label: OmniSpec version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 Pro 24H2 (build 26100.xxxx)"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Affected device
+      description: Exact model of the component (CPU, GPU, motherboard, drive, memory, etc.).
+      placeholder: "e.g. motherboard model and BIOS version"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: problem-type
+    attributes:
+      label: What is the problem?
+      options:
+        - Sensor is missing
+        - Sensor shows a wrong value
+        - Sensor is mislabelled
+        - Device is not detected
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: |
+        Which sensor(s) are affected? What value does OmniSpec show (including its state, e.g. Unavailable or PermissionRequired)?
+        What is the correct value, and which tool or reference shows it (e.g. BIOS, vendor utility)?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: admin
+    attributes:
+      label: Was OmniSpec running as administrator?
+      options:
+        - "No"
+        - "Yes"
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: pawnio
+    attributes:
+      label: Is the PawnIO driver installed?
+      options:
+        - "No"
+        - "Yes"
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: report
+    attributes:
+      label: Exported TXT report
+      description: Attach the TXT report from OmniSpec › Export (drag and drop the file here), or paste the relevant sections.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Checklist
+      options:
+        - label: I removed serial numbers and other personal information from the report.
+          required: true

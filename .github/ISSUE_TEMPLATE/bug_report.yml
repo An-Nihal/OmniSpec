@@ -1,0 +1,122 @@
+name: Bug report
+description: Report a crash or incorrect behaviour in OmniSpec.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+        **Before posting, remove serial numbers and any other personal information** from logs, screenshots and reports.
+        Security vulnerabilities must not be reported here; see the security policy instead.
+
+  - type: input
+    id: version
+    attributes:
+      label: OmniSpec version
+      description: The version you downloaded (it is part of the release file name), or the version shown in the app.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package type
+      options:
+        - Installer (setup.exe)
+        - Portable zip
+        - Standalone single-file exe
+        - Built from source
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Edition, version and build (run `winver`).
+      placeholder: "Windows 11 Pro 24H2 (build 26100.xxxx)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Hardware
+      description: CPU, GPU(s) and motherboard model.
+      placeholder: |
+        CPU:
+        GPU:
+        Motherboard:
+    validations:
+      required: true
+
+  - type: dropdown
+    id: admin
+    attributes:
+      label: Was OmniSpec running as administrator?
+      options:
+        - "No"
+        - "Yes"
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: pawnio
+    attributes:
+      label: Is the PawnIO driver installed?
+      options:
+        - "No"
+        - "Yes"
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open OmniSpec
+        2. Go to ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happened instead? Include error messages and screenshots if helpful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Logs are stored in `%LOCALAPPDATA%\OmniSpec\logs` (or in the `data` folder beside `OmniSpec.exe` in portable mode).
+        Paste the relevant part or attach the file. **Remove serial numbers and personal information first.**
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this has not been reported yet.
+          required: true
+        - label: I removed serial numbers and other personal information from everything I attached.
+          required: true

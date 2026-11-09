@@ -1,0 +1,387 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:OmniSpec.App.ViewModels"
+                    xmlns:c="clr-namespace:OmniSpec.App.Controls">
+
+    <!-- Gauge card used on the overview -->
+    <Style x:Key="GaugeCard" TargetType="Border" BasedOn="{StaticResource Card}">
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <!-- ============================================================ OVERVIEW -->
+    <DataTemplate DataType="{x:Type vm:OverviewViewModel}">
+        <ScrollViewer Style="{StaticResource PageScroll}">
+            <StackPanel>
+                <Grid Margin="0,0,12,16">
+                    <StackPanel>
+                        <TextBlock Text="{Binding MachineTitle}" Style="{StaticResource Text.H1}" />
+                        <TextBlock Text="{Binding MachineSubtitle}" Style="{StaticResource Text.Secondary}" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding UptimeText}" Style="{StaticResource Text.Secondary}" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                </Grid>
+
+                <UniformGrid Columns="4">
+                    <!-- CPU -->
+                    <Border Style="{StaticResource GaugeCard}">
+                        <StackPanel>
+                            <TextBlock Text="PROCESSOR" Style="{StaticResource Text.Label}" />
+                            <TextBlock Text="{Binding CpuName}" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" ToolTip="{Binding CpuName}" />
+                            <Grid Height="120" Margin="0,10">
+                                <c:RingGauge Value="{Binding CpuLoad}" Thickness="10" Width="120" Height="120" />
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding CpuLoadText}" Style="{StaticResource Text.Value}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="utilization" Style="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid>
+                                <TextBlock Text="{Binding CpuTempText}" Style="{StaticResource Text.Secondary}" ToolTip="Package temperature" />
+                                <TextBlock Text="{Binding CpuClockText}" Style="{StaticResource Text.Secondary}" HorizontalAlignment="Right" ToolTip="Clock" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <!-- GPU -->
+                    <Border Style="{StaticResource GaugeCard}">
+                        <StackPanel>
+                            <TextBlock Text="GRAPHICS" Style="{StaticResource Text.Label}" />
+                            <TextBlock Text="{Binding GpuName}" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" ToolTip="{Binding GpuName}" />
+                            <Grid Height="120" Margin="0,10">
+                                <c:RingGauge Value="{Binding GpuLoad}" Thickness="10" Width="120" Height="120" Brush="{DynamicResource Brush.Series2}" />
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding GpuLoadText}" Style="{StaticResource Text.Value}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="utilization" Style="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid>
+                                <TextBlock Text="{Binding GpuTempText}" Style="{StaticResource Text.Secondary}" ToolTip="GPU temperature" />
+                                <TextBlock Text="{Binding VramText}" Style="{StaticResource Text.Secondary}" HorizontalAlignment="Right" ToolTip="Dedicated VRAM" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <!-- RAM -->
+                    <Border Style="{StaticResource GaugeCard}">
+                        <StackPanel>
+                            <TextBlock Text="MEMORY" Style="{StaticResource Text.Label}" />
+                            <TextBlock Text="{Binding RamText}" Style="{StaticResource Text.Caption}" />
+                            <Grid Height="120" Margin="0,10">
+                                <c:RingGauge Value="{Binding RamPercent}" Thickness="10" Width="120" Height="120" Brush="{DynamicResource Brush.Series3}" />
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding RamPercentText}" Style="{StaticResource Text.Value}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="in use" Style="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="{Binding RamAvailableText}" Style="{StaticResource Text.Secondary}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Border>
+                    <!-- Network / power -->
+                    <Border Style="{StaticResource GaugeCard}">
+                        <StackPanel>
+                            <TextBlock Text="NETWORK" Style="{StaticResource Text.Label}" />
+                            <TextBlock Text="{Binding NetworkName}" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <TextBlock Text="&#xE896;" Style="{StaticResource Text.Icon}" Foreground="{DynamicResource Brush.Accent}" Margin="0,0,6,0" />
+                                <TextBlock Text="{Binding DownText}" Style="{StaticResource Text.ValueSmall}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <TextBlock Text="&#xE898;" Style="{StaticResource Text.Icon}" Foreground="{DynamicResource Brush.Series2}" Margin="0,0,6,0" />
+                                <TextBlock Text="{Binding UpText}" Style="{StaticResource Text.ValueSmall}" />
+                            </StackPanel>
+                            <c:LineChart Series="{Binding NetworkSeries}" Height="44" ShowAxis="False" WindowSeconds="120" Margin="0,8,0,8" EmptyText="" />
+                            <Separator />
+                            <Grid Margin="0,6,0,0">
+                                <TextBlock Text="{Binding PowerTitle}" Style="{StaticResource Text.Secondary}" />
+                                <TextBlock Text="{Binding PowerText}" Style="{StaticResource Text.Base}" HorizontalAlignment="Right" FontWeight="SemiBold" />
+                            </Grid>
+                            <TextBlock Text="{Binding PowerSub}" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Utilization" Style="{StaticResource ChartTitle}" />
+                            <TextBlock Text="CPU (accent) and GPU (rose), last 5 minutes" Style="{StaticResource Text.Caption}" />
+                            <c:LineChart Series="{Binding LoadSeries}" Height="170" Minimum="0" Maximum="100" Unit="%" Margin="0,10,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Temperatures" Style="{StaticResource ChartTitle}" />
+                            <TextBlock Text="CPU package and GPU core, last 5 minutes" Style="{StaticResource Text.Caption}" />
+                            <c:LineChart Series="{Binding TempSeries}" Height="170" Unit="°" Margin="0,10,0,0"
+                                         EmptyText="Collecting temperature data…" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Storage" Style="{StaticResource Text.H3}" Margin="0,0,0,10" />
+                        <ItemsControl ItemsSource="{Binding Drives}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Base}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                                            <ProgressBar Value="{Binding UsedPercent, Mode=OneWay, Converter={StaticResource NanZero}}" Maximum="100"
+                                                         Foreground="{Binding UsedPercent, Converter={StaticResource LoadBrush}}" />
+                                            <TextBlock Text="{Binding UsageText}" Style="{StaticResource Text.Caption}" Margin="0,3,0,0" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding TempText}" Style="{StaticResource Text.Secondary}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                            <Border Style="{StaticResource Badge}" Background="{Binding Level, Converter={StaticResource HealthBrush}, ConverterParameter=soft}">
+                                                <TextBlock Text="{Binding LevelText}" FontWeight="SemiBold" FontSize="12"
+                                                           Foreground="{Binding Level, Converter={StaticResource HealthBrush}}" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Collecting drive information…" Style="{StaticResource Text.Caption}"
+                                   Visibility="{Binding Drives.Count, Converter={StaticResource Collapsed}}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============================================================ CPU -->
+    <DataTemplate DataType="{x:Type vm:CpuViewModel}">
+        <ScrollViewer Style="{StaticResource PageScroll}">
+            <StackPanel>
+                <TextBlock Text="{Binding Name}" Style="{StaticResource Text.H1}" />
+                <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Text.Secondary}" Margin="0,2,0,16" />
+                <ItemsControl ItemsSource="{Binding Tiles}" Style="{StaticResource Tiles}" Margin="0,0,0,6" />
+
+                <UniformGrid Columns="2" VerticalAlignment="Top">
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Utilization" Style="{StaticResource ChartTitle}" />
+                            <TextBlock Text="{Binding LoadStats}" Style="{StaticResource Text.Caption}" />
+                            <c:LineChart Series="{Binding LoadSeries}" Height="150" Minimum="0" Maximum="100" Unit="%" Margin="0,10,0,0" WindowSeconds="{Binding WindowSeconds}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Visibility="{Binding HasTemperature, Converter={StaticResource Visible}}">
+                        <StackPanel>
+                            <TextBlock Text="Package temperature" Style="{StaticResource ChartTitle}" />
+                            <TextBlock Text="{Binding TempStats}" Style="{StaticResource Text.Caption}" />
+                            <c:LineChart Series="{Binding TempSeries}" Height="150" Unit="°" Margin="0,10,0,0" WindowSeconds="{Binding WindowSeconds}"
+                                         EmptyText="Temperature not available" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Visibility="{Binding HasPower, Converter={StaticResource Visible}}">
+                        <StackPanel>
+                            <TextBlock Text="Package power" Style="{StaticResource ChartTitle}" />
+                            <TextBlock Text="{Binding PowerStats}" Style="{StaticResource Text.Caption}" />
+                            <c:LineChart Series="{Binding PowerSeries}" Height="150" Unit="W" Margin="0,10,0,0" WindowSeconds="{Binding WindowSeconds}"
+                                         EmptyText="Power not available" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Chart window" Style="{StaticResource ChartTitle}" />
+                            <TextBlock Text="Time span shown on CPU charts" Style="{StaticResource Text.Caption}" Margin="0,0,0,12" />
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Style="{StaticResource Segment}" Content="1 min" GroupName="cpuwin"
+                                             IsChecked="{Binding WindowSeconds, Converter={StaticResource Equals}, ConverterParameter=60, Mode=OneWay}"
+                                             Command="{Binding DataContext.SetWindowCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" CommandParameter="60" />
+                                <RadioButton Style="{StaticResource Segment}" Content="5 min" GroupName="cpuwin"
+                                             IsChecked="{Binding WindowSeconds, Converter={StaticResource Equals}, ConverterParameter=300, Mode=OneWay}"
+                                             Command="{Binding DataContext.SetWindowCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" CommandParameter="300" />
+                                <RadioButton Style="{StaticResource Segment}" Content="15 min" GroupName="cpuwin"
+                                             IsChecked="{Binding WindowSeconds, Converter={StaticResource Equals}, ConverterParameter=900, Mode=OneWay}"
+                                             Command="{Binding DataContext.SetWindowCommand, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" CommandParameter="900" />
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,12,0,0"
+                                       Text="History length is limited by Settings › History. Min/max/avg values are since OmniSpec started." />
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Logical processors" Style="{StaticResource Text.H3}" />
+                        <TextBlock Text="Utilization per logical processor (Windows performance counters). Clocks and temperatures appear when the sensor library exposes them per core."
+                                   Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,2,0,12" />
+                        <ItemsControl ItemsSource="{Binding Cores}" ItemsPanel="{StaticResource WrapPanel}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:CoreItem}">
+                                    <Border Style="{StaticResource Tile}" Width="128" MinWidth="0" Padding="10,8">
+                                        <StackPanel>
+                                            <Grid>
+                                                <TextBlock Text="{Binding Label}" Style="{StaticResource Text.Label}" />
+                                                <TextBlock Text="{Binding CoreType}" Style="{StaticResource Text.Caption}" HorizontalAlignment="Right" />
+                                            </Grid>
+                                            <TextBlock Text="{Binding LoadText}" Style="{StaticResource Text.ValueSmall}" Margin="0,2" />
+                                            <ProgressBar Value="{Binding Load, Mode=OneWay, Converter={StaticResource NanZero}}" Maximum="100" Height="4"
+                                                         Foreground="{Binding Load, Converter={StaticResource LoadBrush}}" />
+                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============================================================ GPU -->
+    <DataTemplate DataType="{x:Type vm:GpuViewModel}">
+        <ScrollViewer Style="{StaticResource PageScroll}">
+            <StackPanel>
+                <Grid Margin="0,0,12,16">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Name}" Style="{StaticResource Text.H1}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="Live graphics telemetry" Style="{StaticResource Text.Secondary}" />
+                    </StackPanel>
+                    <ComboBox ItemsSource="{Binding GpuNames}" SelectedIndex="{Binding SelectedIndex}" Width="300" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Visibility="{Binding HasGpu, Converter={StaticResource Visible}}" />
+                </Grid>
+                <Border Style="{StaticResource Banner.Info}" Visibility="{Binding HasGpu, Converter={StaticResource Collapsed}}">
+                    <TextBlock Style="{StaticResource Text.Base}" TextWrapping="Wrap"
+                               Text="Detecting graphics adapters…" />
+                </Border>
+                <StackPanel Visibility="{Binding HasGpu, Converter={StaticResource Visible}}">
+                    <ItemsControl ItemsSource="{Binding Tiles}" Style="{StaticResource Tiles}" Margin="0,0,0,6" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Video memory" Style="{StaticResource Text.H3}" />
+                                <TextBlock Text="{Binding VramText}" Style="{StaticResource Text.Secondary}" Margin="0,8,0,6" />
+                                <ProgressBar Value="{Binding VramPercent, Mode=OneWay, Converter={StaticResource NanZero}}" Maximum="100" Height="8"
+                                             Foreground="{Binding VramPercent, Converter={StaticResource LoadBrush}}" />
+                                <TextBlock Text="{Binding SharedText}" Style="{StaticResource Text.Caption}" Margin="0,8,0,14" />
+                                <TextBlock Text="Engines" Style="{StaticResource Text.H3}" Margin="0,0,0,6" />
+                                <ItemsControl ItemsSource="{Binding Engines}" Style="{StaticResource Rows}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Adapter details" Style="{StaticResource Text.H3}" Margin="0,0,0,6" />
+                                <ItemsControl ItemsSource="{Binding Details}" Style="{StaticResource Rows}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <UniformGrid Columns="3">
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Utilization" Style="{StaticResource ChartTitle}" />
+                                <TextBlock Text="{Binding LoadStats}" Style="{StaticResource Text.Caption}" />
+                                <c:LineChart Series="{Binding LoadSeries}" Height="140" Minimum="0" Maximum="100" Unit="%" Margin="0,10,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Temperature" Style="{StaticResource ChartTitle}" />
+                                <TextBlock Text="{Binding TempStats}" Style="{StaticResource Text.Caption}" />
+                                <c:LineChart Series="{Binding TempSeries}" Height="140" Unit="°" Margin="0,10,0,0" EmptyText="Temperature not available" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Power" Style="{StaticResource ChartTitle}" />
+                                <TextBlock Text="{Binding PowerStats}" Style="{StaticResource Text.Caption}" />
+                                <c:LineChart Series="{Binding PowerSeries}" Height="140" Unit="W" Margin="0,10,0,0" EmptyText="Power not available" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============================================================ MEMORY -->
+    <DataTemplate DataType="{x:Type vm:MemoryViewModel}">
+        <ScrollViewer Style="{StaticResource PageScroll}">
+            <StackPanel>
+                <TextBlock Text="Memory" Style="{StaticResource Text.H1}" />
+                <TextBlock Text="{Binding UsedText}" Style="{StaticResource Text.Secondary}" Margin="0,2,0,10" />
+                <ProgressBar Value="{Binding UsedPercent, Mode=OneWay, Converter={StaticResource NanZero}}" Maximum="100" Height="10" Margin="0,0,12,16"
+                             Foreground="{Binding UsedPercent, Converter={StaticResource LoadBrush}}" />
+                <ItemsControl ItemsSource="{Binding Tiles}" Style="{StaticResource Tiles}" Margin="0,0,0,6" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Usage history" Style="{StaticResource ChartTitle}" />
+                            <TextBlock Text="{Binding UsageStats}" Style="{StaticResource Text.Caption}" />
+                            <c:LineChart Series="{Binding UsageSeries}" Height="180" Minimum="0" Maximum="100" Unit="%" Margin="0,10,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Top memory consumers" Style="{StaticResource Text.H3}" Margin="0,0,0,6" />
+                            <ItemsControl ItemsSource="{Binding TopProcesses}" Style="{StaticResource Rows}" />
+                            <TextBlock Text="Loading…" Style="{StaticResource Text.Caption}" Visibility="{Binding TopProcesses.Count, Converter={StaticResource Collapsed}}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="3*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Configuration" Style="{StaticResource Text.H3}" Margin="0,0,0,6" />
+                            <ItemsControl ItemsSource="{Binding Summary}" Style="{StaticResource Rows}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Installed modules" Style="{StaticResource Text.H3}" Margin="0,0,0,6" />
+                            <ItemsControl ItemsSource="{Binding Modules}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource Tile}" Margin="0,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource Text.H3}" Margin="0,0,0,4" />
+                                                <ItemsControl ItemsSource="{Binding Items}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,2" ToolTip="{Binding Source}">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="140" />
+                                                                    <ColumnDefinition />
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="{Binding Label}" Style="{StaticResource Text.Secondary}" />
+                                                                <TextBlock Grid.Column="1" Text="{Binding Path=., Converter={StaticResource InfoValue}}" Style="{StaticResource Text.Base}" TextWrapping="Wrap"
+                                                                           Foreground="{Binding State, Converter={StaticResource StateBrush}}" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+</ResourceDictionary>

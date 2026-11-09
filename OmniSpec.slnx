@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OmniSpec.App/OmniSpec.App.csproj" />
+    <Project Path="src/OmniSpec.Core/OmniSpec.Core.csproj" />
+    <Project Path="src/OmniSpec.Hardware/OmniSpec.Hardware.csproj" />
+    <Project Path="src/OmniSpec.Infrastructure/OmniSpec.Infrastructure.csproj" />
+    <Project Path="src/OmniSpec.Monitoring/OmniSpec.Monitoring.csproj" />
+    <Project Path="src/OmniSpec.SystemInformation/OmniSpec.SystemInformation.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OmniSpec.Tests/OmniSpec.Tests.csproj" />
+  </Folder>
+</Solution>
