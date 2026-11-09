@@ -5,6 +5,21 @@ All notable changes to OmniSpec are documented in this file. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-10
+
+### Added
+- **In-game overlay** (new *Overlay* page):
+  - **Choose what to show:** select or deselect each item. FPS, 1% and 0.1% lows, frame time, frame-time graph,
+    GPU usage/temperature/hot spot/clock/power/fan, CPU usage/temperature/clock/power, RAM, VRAM, game name and clock.
+  - **Automatic:** appears when a fullscreen game is in front and starts FPS measurement for it. Browsers and video
+    players are excluded, and the exclusion list is editable.
+  - **Shortcut:** a global show/hide shortcut, Ctrl+Shift+O by default.
+  - **Appearance:** vertical or horizontal layout, corner position, size, opacity, and amber/red warning colors near
+    your alert limits.
+  - **Anti-cheat friendly:** a click-through, always-on-top window that never injects into games. It re-asserts its
+    top-most position and follows the game's monitor.
+- **Live preview** of the overlay on the settings page, plus an on-screen test switch.
+
 ## [1.0.0] - 2026-11-10
 
 ### Added
@@ -61,5 +76,6 @@ All notable changes to OmniSpec are documented in this file. The format follows
   - **Installer:** an Inno Setup installer.
   - **Artifacts:** a portable zip and SHA-256 checksums.
 
-[Unreleased]: https://github.com/An-Nihal/OmniSpec/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/An-Nihal/OmniSpec/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/An-Nihal/OmniSpec/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/An-Nihal/OmniSpec/releases/tag/v1.0.0

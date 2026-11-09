@@ -89,7 +89,9 @@ public sealed class EqualsConverter : IValueConverter
         string.Equals(value?.ToString(), parameter?.ToString(), StringComparison.OrdinalIgnoreCase);
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
-        value is true ? Enum.TryParse(targetType, parameter?.ToString(), out var e) ? e! : parameter! : Binding.DoNothing;
+        value is true
+            ? targetType.IsEnum && Enum.TryParse(targetType, parameter?.ToString(), out var e) ? e! : parameter!
+            : Binding.DoNothing;
 }
 
 /// <summary>Displays an <see cref="OmniSpec.Core.SystemInfo.InfoItem"/> with sensitive values hidden.</summary>

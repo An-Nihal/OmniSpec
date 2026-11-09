@@ -51,6 +51,7 @@ public sealed class AppSettings
     public WidgetSettings Widget { get; set; } = new();
     public AlertSettings Alerts { get; set; } = new();
     public FpsSettings Fps { get; set; } = new();
+    public OverlaySettings Overlay { get; set; } = new();
 
     /// <summary>Per-sensor custom warning limits, keyed by sensor id.</summary>
     public Dictionary<string, double> SensorLimits { get; set; } = new();
@@ -68,6 +69,7 @@ public sealed class AppSettings
         Widget ??= new();
         Alerts ??= new();
         Fps ??= new();
+        Overlay = (Overlay ?? new()).Normalize();
         SensorLimits ??= new();
         Widget.Opacity = Math.Clamp(Widget.Opacity, 0.2, 1.0);
         Widget.Metrics ??= WidgetSettings.DefaultMetrics.ToList();
@@ -112,10 +114,127 @@ public sealed class FpsSettings
     public string? PresentMonPath { get; set; }
     /// <summary>Extra arguments appended to the PresentMon command line.</summary>
     public string ExtraArguments { get; set; } = string.Empty;
-    public bool ShowOverlay { get; set; } = true;
-    /// <summary>TopLeft, TopRight, BottomLeft or BottomRight of the primary screen.</summary>
-    public string OverlayCorner { get; set; } = "TopLeft";
-    public double OverlayOpacity { get; set; } = 0.85;
+}
+
+/// <summary>In-game performance overlay (transparent, click-through, always-on-top window — never injected into games).</summary>
+public sealed class OverlaySettings
+{
+    /// <summary>Every item the overlay can show, in display order.</summary>
+    public static readonly string[] AllItems =
+    [
+        "fps", "onepercent", "pointone", "frametime", "frametimegraph",
+        "gpuload", "gputemp", "gpuhotspot", "gpuclock", "gpupower", "gpufan",
+        "cpuload", "cputemp", "cpuclock", "cpupower",
+        "ram", "vram",
+        "app", "time",
+    ];
+
+    public static readonly string[] DefaultItems =
+        ["fps", "onepercent", "frametime", "frametimegraph", "gpuload", "gputemp", "cpuload", "cputemp", "ram", "vram"];
+
+    public static readonly string[] Modes = ["Games", "Always", "Manual"];
+    public static readonly string[] Corners = ["TopLeft", "TopRight", "BottomLeft", "BottomRight"];
+    public static readonly string[] Layouts = ["Vertical", "Horizontal"];
+
+    /// <summary>Default list of programs that are never treated as games (browsers, video players, shell).</summary>
+    public static readonly string[] DefaultExcludedApps =
+    [
+        "explorer", "ApplicationFrameHost", "ShellExperienceHost", "StartMenuExperienceHost", "SearchHost", "LockApp",
+        "TextInputHost", "msedge", "chrome", "firefox", "brave", "opera", "vivaldi", "iexplore", "vlc", "mpc-hc", "mpc-hc64",
+        "mpc-be64", "mpv", "PotPlayerMini64", "PotPlayer64", "wmplayer", "Microsoft.Media.Player", "Video.UI", "obs64",
+        "Taskmgr", "mstsc", "POWERPNT", "OmniSpec", "Discord", "Spotify",
+    ];
+
+    public bool Enabled { get; set; } = true;
+    /// <summary>Games = show automatically while a fullscreen game is in front; Always = always visible; Manual = hotkey only.</summary>
+    public string Mode { get; set; } = "Games";
+    /// <summary>Start FPS capture automatically for the detected game.</summary>
+    public bool AutoCapture { get; set; } = true;
+    public string Hotkey { get; set; } = "Ctrl+Shift+O";
+    public string Corner { get; set; } = "TopLeft";
+    public string Layout { get; set; } = "Vertical";
+    public double Opacity { get; set; } = 0.9;
+    public double Scale { get; set; } = 1.0;
+    public bool ColorWarnings { get; set; } = true;
+    public List<string> Items { get; set; } = DefaultItems.ToList();
+    public List<string> ExcludedApps { get; set; } = DefaultExcludedApps.ToList();
+    /// <summary>Programs always treated as games, even when not fullscreen.</summary>
+    public List<string> AlwaysGames { get; set; } = new();
+
+    public OverlaySettings Normalize()
+    {
+        Items ??= DefaultItems.ToList();
+        Items = Items.Where(AllItems.Contains).Distinct().ToList();
+        ExcludedApps ??= DefaultExcludedApps.ToList();
+        AlwaysGames ??= new();
+        if (!Modes.Contains(Mode)) Mode = "Games";
+        if (!Corners.Contains(Corner)) Corner = "TopLeft";
+        if (!Layouts.Contains(Layout)) Layout = "Vertical";
+        Opacity = Math.Clamp(Opacity, 0.3, 1.0);
+        Scale = Math.Clamp(Scale, 0.7, 2.0);
+        if (!HotkeyParser.TryParse(Hotkey, out _)) Hotkey = "Ctrl+Shift+O";
+        return this;
+    }
+}
+
+/// <summary>Parses hotkey strings such as "Ctrl+Shift+O" into Win32 RegisterHotKey modifiers and a virtual-key code.</summary>
+public static class HotkeyParser
+{
+    public const uint ModAlt = 0x1, ModControl = 0x2, ModShift = 0x4, ModWin = 0x8;
+
+    public readonly record struct Hotkey(uint Modifiers, uint VirtualKey);
+
+    public static bool TryParse(string? text, out Hotkey hotkey)
+    {
+        hotkey = default;
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        uint mods = 0;
+        uint? vk = null;
+        foreach (var raw in text.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var part = raw.ToUpperInvariant();
+            switch (part)
+            {
+                case "CTRL" or "CONTROL": mods |= ModControl; continue;
+                case "SHIFT": mods |= ModShift; continue;
+                case "ALT": mods |= ModAlt; continue;
+                case "WIN" or "WINDOWS": mods |= ModWin; continue;
+            }
+            if (vk is not null) return false; // only one non-modifier key
+            vk = part switch
+            {
+                { Length: 1 } when char.IsLetterOrDigit(part[0]) => part[0],
+                ['F', .. var n] when int.TryParse(n, out var f) && f is >= 1 and <= 24 => (uint)(0x70 + f - 1),
+                "INSERT" or "INS" => 0x2D,
+                "HOME" => 0x24,
+                "END" => 0x23,
+                "PAGEUP" or "PGUP" => 0x21,
+                "PAGEDOWN" or "PGDN" => 0x22,
+                "SCROLLLOCK" => 0x91,
+                "PAUSE" => 0x13,
+                _ => null,
+            };
+            if (vk is null) return false;
+        }
+        // Require a modifier for letters/digits so normal typing is never captured.
+        if (vk is null || (mods == 0 && vk.Value is >= 0x30 and <= 0x5A)) return false;
+        hotkey = new Hotkey(mods, vk.Value);
+        return true;
+    }
+}
+
+/// <summary>Decides whether a foreground program should be treated as a game for the overlay.</summary>
+public static class GameRules
+{
+    public static bool IsGame(string processName, bool fullscreen, IEnumerable<string> excluded, IEnumerable<string> alwaysGames)
+    {
+        static string Clean(string s) => s.Trim().ToLowerInvariant().Replace(".exe", "");
+        var name = Clean(processName);
+        if (name.Length == 0) return false;
+        if (alwaysGames.Any(a => Clean(a) == name)) return true;
+        if (excluded.Any(e => Clean(e) == name)) return false;
+        return fullscreen;
+    }
 }
 
 public interface ISettingsStore

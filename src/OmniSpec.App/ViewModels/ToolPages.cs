@@ -352,9 +352,7 @@ public sealed partial class SettingsViewModel : PageViewModel
     // FPS
     public string PresentMonPath { get => S.Fps.PresentMonPath ?? string.Empty; set => Change(() => S.Fps.PresentMonPath = string.IsNullOrWhiteSpace(value) ? null : value.Trim()); }
     public string PresentMonArguments { get => S.Fps.ExtraArguments; set => Change(() => S.Fps.ExtraArguments = value ?? string.Empty); }
-    public bool ShowOverlay { get => S.Fps.ShowOverlay; set => Change(() => S.Fps.ShowOverlay = value); }
-    public string[] OverlayCorners { get; } = ["TopLeft", "TopRight", "BottomLeft", "BottomRight"];
-    public string OverlayCorner { get => S.Fps.OverlayCorner; set => Change(() => S.Fps.OverlayCorner = value); }
+
 
     [RelayCommand]
     private void BrowsePresentMon()

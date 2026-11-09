@@ -75,8 +75,8 @@ public sealed partial class GamingViewModel : PageViewModel
 
     public bool ShowOverlay
     {
-        get => _settings.Current.Fps.ShowOverlay;
-        set { _settings.Current.Fps.ShowOverlay = value; _settings.Save(); OnPropertyChanged(); }
+        get => _settings.Current.Overlay.Enabled;
+        set { _settings.Current.Overlay.Enabled = value; _settings.Save(); OnPropertyChanged(); }
     }
 
     partial void OnSelectedProcessChanged(ProcessChoice? value) => OnPropertyChanged(nameof(CanStart));
@@ -428,47 +428,5 @@ public sealed partial class WidgetViewModel : ObservableObject
         clock.Sub = DateTime.Now.ToString("ddd d MMM");
 
         foreach (var r in Rows) r.IsVisible = enabled.Contains(r.Key) && !(r.Key == "battery" && r.Value == "n/a");
-    }
-}
-
-// =====================================================================================================================
-// In-game overlay
-// =====================================================================================================================
-public sealed partial class OverlayViewModel : ObservableObject
-{
-    private readonly FpsMonitor _fps;
-    private readonly MonitoringService _monitoring;
-    private readonly ISettingsService _settings;
-
-    public OverlayViewModel(FpsMonitor fps, MonitoringService monitoring, ISettingsService settings)
-    {
-        _fps = fps;
-        _monitoring = monitoring;
-        _settings = settings;
-    }
-
-    [ObservableProperty] private string _fpsText = "—";
-    [ObservableProperty] private string _lowText = "—";
-    [ObservableProperty] private string _frameTimeText = "—";
-    [ObservableProperty] private string _cpuText = "—";
-    [ObservableProperty] private string _gpuText = "—";
-    [ObservableProperty] private string _appName = string.Empty;
-
-    public void Update()
-    {
-        var s = _fps.Session;
-        if (s is null) return;
-        AppName = s.ProcessName;
-        FpsText = s.CurrentFps is double f ? $"{f:0}" : "—";
-        var recent = s.RecentStatistics(1000);
-        LowText = recent.FrameCount > 50 ? $"1% {recent.OnePercentLowFps:0}" : "1% —";
-        FrameTimeText = s.LastFrameTimeMs is double ft ? $"{ft:0.0} ms" : "—";
-        if (_monitoring.Latest is { } live)
-        {
-            CpuText = $"CPU {Fmt.Pct(live.CpuUsage?.TotalLoad)}{(live.Cpu.PackageTemperature.HasValue ? $" {live.Cpu.PackageTemperature.Value:0}°" : "")}";
-            var gi = Math.Clamp(_settings.Current.SelectedGpuIndex, 0, Math.Max(0, live.Gpus.Count - 1));
-            var g = live.Gpus.Count > 0 ? live.Gpus[gi] : null;
-            GpuText = g is null ? "GPU —" : $"GPU {Fmt.Pct(g.Load)}{(g.Temperature.HasValue ? $" {g.Temperature.Value:0}°" : "")}";
-        }
     }
 }

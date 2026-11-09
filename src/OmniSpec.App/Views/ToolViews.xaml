@@ -395,12 +395,7 @@
                             <TextBlock Grid.Row="1" Text="Extra arguments" Style="{StaticResource SettingLabel}" />
                             <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PresentMonArguments, UpdateSourceTrigger=LostFocus}" Margin="0,6,0,0"
                                      ToolTip="Appended to the PresentMon command line (advanced)" />
-                            <TextBlock Grid.Row="2" Text="Overlay position" Style="{StaticResource SettingLabel}" />
-                            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding OverlayCorners}" SelectedItem="{Binding OverlayCorner}" Width="200" HorizontalAlignment="Left" Margin="0,6,0,0" />
                         </Grid>
-                        <CheckBox Content="Show in-game overlay while capturing" IsChecked="{Binding ShowOverlay}" Margin="0,8,0,0" />
-                        <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,4,0,0"
-                                   Text="The overlay is a click-through, always-on-top window. It is visible over borderless/windowed games; exclusive full-screen games may hide it." />
                     </StackPanel>
                 </Border>
 

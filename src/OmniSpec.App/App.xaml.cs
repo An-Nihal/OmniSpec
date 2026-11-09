@@ -37,7 +37,7 @@ public partial class App : Application
     private ILogger<App>? _logger;
     private MainWindow? _main;
     private WidgetWindow? _widget;
-    private OverlayWindow? _overlay;
+    private OverlayController? _overlayController;
     private TrayService? _tray;
     private bool _exiting;
     private bool _activationListenerStarted;
@@ -141,9 +141,8 @@ public partial class App : Application
         widgetVm.PropertyChanged += (_, pe) => { if (pe.PropertyName == nameof(WidgetViewModel.IsVisible)) SyncWidget(); };
         SyncWidget();
 
-        fps.SessionChanged += (_, _) => Dispatcher.BeginInvoke(SyncOverlay);
-        fps.CaptureStopped += (_, _) => Dispatcher.BeginInvoke(SyncOverlay);
-        settings.Changed += (_, _) => SyncOverlay();
+        _overlayController = _services.GetRequiredService<OverlayController>();
+        _overlayController.Start();
 
         await Task.CompletedTask;
     }
@@ -192,6 +191,7 @@ public partial class App : Application
         s.AddSingleton<PageViewModel, MemoryViewModel>();
         s.AddSingleton<PageViewModel, StorageViewModel>();
         s.AddSingleton<PageViewModel, GamingViewModel>();
+        s.AddSingleton<PageViewModel, OverlayPageViewModel>();
         s.AddSingleton<PageViewModel, SensorsViewModel>();
         s.AddSingleton<PageViewModel, NetworkViewModel>();
         s.AddSingleton<PageViewModel, BatteryViewModel>();
@@ -199,6 +199,7 @@ public partial class App : Application
         s.AddSingleton<PageViewModel, SettingsViewModel>();
         s.AddSingleton<WidgetViewModel>();
         s.AddSingleton<OverlayViewModel>();
+        s.AddSingleton<OverlayController>();
         s.AddSingleton<MainViewModel>();
         s.AddSingleton<MainWindow>();
         return s.BuildServiceProvider();
@@ -264,12 +265,6 @@ public partial class App : Application
         }
     }
 
-    private void SyncOverlay()
-    {
-        if (_services is null || _exiting) return;
-        _overlay ??= new OverlayWindow(_services.GetRequiredService<OverlayViewModel>(), _services.GetRequiredService<ISettingsService>());
-        _overlay.Sync(_services.GetRequiredService<FpsMonitor>());
-    }
 
     private DateTime _lastTooltip;
 
@@ -348,7 +343,7 @@ public partial class App : Application
                 _main.Close();
             }
             _widget?.Close();
-            _overlay?.Close();
+            _overlayController?.Dispose();
             _tray?.Dispose();
             if (_services is not null)
             {

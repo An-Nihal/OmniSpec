@@ -40,6 +40,26 @@ internal static partial class WindowInterop
     public static void MakeClickThrough(Window window) =>
         AddExStyle(window, WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT { public int Left, Top, Right, Bottom; }
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetWindowRect(IntPtr hWnd, out RECT rect);
+
+    private static readonly IntPtr HWND_TOPMOST = new(-1);
+    private const uint SWP_SHOWWINDOW = 0x40;
+
+    public static (int Width, int Height) PixelSize(IntPtr hwnd) =>
+        GetWindowRect(hwnd, out var r) ? (r.Right - r.Left, r.Bottom - r.Top) : (0, 0);
+
+    /// <summary>
+    /// Moves the window (physical pixels) and pushes it to the top of the top-most band without activating it.
+    /// Called on every overlay refresh so the overlay stays above a game that also uses top-most windows.
+    /// </summary>
+    public static void PlaceTopmost(IntPtr hwnd, int x, int y) =>
+        SetWindowPos(hwnd, HWND_TOPMOST, x, y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+
     /// <summary>Moves the window to the bottom of the z-order so it sits on the desktop behind other windows.</summary>
     public static void SendToBottom(Window window)
     {

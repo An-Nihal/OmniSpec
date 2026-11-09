@@ -29,6 +29,7 @@ Permission Required, Error*) and a data source you can see by hovering over it.
 | **Network** | Per-adapter state, type, link speed, download/upload rates, utilization, totals, connection uptime and throughput charts |
 | **Battery** | Charge, status, AC state, design/full-charge/current capacity, cycle count, voltage, charge rate, estimated wear and runtime. Measured values and estimates are shown separately |
 | **Processes** | Searchable, sortable list with CPU %, memory, private bytes, disk read/write, threads, top CPU/memory and details. Read-only: OmniSpec never terminates or modifies processes |
+| **In-game overlay** | A RivaTuner-style on-screen display that you configure item by item: FPS, 1%/0.1% lows, frame time and frame-time graph, GPU and CPU usage/temperature/clock/power, GPU hot spot and fan, RAM and VRAM, game name and clock. It appears automatically over fullscreen games and measures their FPS. Show/hide shortcut (default **Ctrl+Shift+O**), layout, position, size, opacity and warning colors are configurable. It is a click-through window that is **never injected into games**, so it is safe with anti-cheat systems |
 | **Desktop widget** | Borderless, draggable and resizable. Always-on-top or pinned to the desktop, adjustable opacity, compact mode, lockable position, selectable metrics, remembers its position, toggled from the tray |
 | **Alerts** | CPU/GPU/drive temperature, drive health, low disk space, high RAM, battery wear and custom per-sensor limits. Each alert is shown once per episode as a Windows notification |
 | **History & export** | Bounded in-memory history (configurable), optional daily CSV logging to disk, JSON/TXT system reports, frame-capture CSV |
@@ -97,6 +98,19 @@ FPS is application-specific; there is no meaningful "desktop FPS", so OmniSpec m
 Metric definitions (average FPS = frames ÷ total frame time; 1% low = 1000 ÷ 99th-percentile frame time, etc.) are
 documented in [docs/ACCURACY.md](docs/ACCURACY.md). The overlay is a click-through, always-on-top window. It shows over
 borderless and windowed games; exclusive full-screen games may hide it.
+
+## In-game overlay and fullscreen games
+
+The overlay is an always-on-top, click-through window drawn by Windows above the game. It does not inject code into
+games, which keeps it safe with anti-cheat systems (Easy Anti-Cheat, BattlEye, Vanguard, …).
+
+- **Borderless / windowed-fullscreen games:** always visible.
+- **DirectX 12 games:** always visible. DX12 has no true exclusive fullscreen.
+- **"Exclusive fullscreen" DirectX 9/10/11 games:** visible in most cases, because Windows 10/11 runs them with
+  *fullscreen optimizations* (on by default), which allows overlays.
+- **True legacy exclusive fullscreen:** when fullscreen optimizations are disabled for a game, or for some
+  OpenGL/Vulkan titles, the game bypasses the Windows compositor. No window can appear on top then; only in-game
+  injection could, and OmniSpec deliberately avoids that. Switching the game to *Borderless* fixes it.
 
 ## Drive health: how to read it
 

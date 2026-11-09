@@ -265,3 +265,50 @@ public class SettingsNormalizationTests
         Assert.NotNull(s.Alerts);
     }
 }
+
+public class OverlayLogicTests
+{
+    [Theory]
+    [InlineData("Ctrl+Shift+O", HotkeyParser.ModControl | HotkeyParser.ModShift, 0x4FU)]
+    [InlineData("alt + f10", HotkeyParser.ModAlt, 0x79U)]
+    [InlineData("Ctrl+Insert", HotkeyParser.ModControl, 0x2DU)]
+    [InlineData("F12", 0U, 0x7BU)]
+    public void Valid_hotkeys_parse(string text, uint mods, uint vk)
+    {
+        Assert.True(HotkeyParser.TryParse(text, out var hk));
+        Assert.Equal(mods, hk.Modifiers);
+        Assert.Equal(vk, hk.VirtualKey);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("O")]            // plain letter would capture normal typing
+    [InlineData("Ctrl+Shift")]   // no key
+    [InlineData("Ctrl+A+B")]     // two keys
+    [InlineData("Ctrl+Banana")]
+    public void Invalid_hotkeys_are_rejected(string text) => Assert.False(HotkeyParser.TryParse(text, out _));
+
+    [Fact]
+    public void Game_rules_respect_exclusions_and_overrides()
+    {
+        string[] excluded = ["msedge", "vlc"];
+        string[] always = ["MyWindowedGame"];
+        Assert.True(GameRules.IsGame("Cyberpunk2077", fullscreen: true, excluded, always));
+        Assert.False(GameRules.IsGame("Cyberpunk2077", fullscreen: false, excluded, always));
+        Assert.False(GameRules.IsGame("msedge", fullscreen: true, excluded, always));      // fullscreen video in a browser
+        Assert.False(GameRules.IsGame("VLC.exe", fullscreen: true, excluded, always));
+        Assert.True(GameRules.IsGame("mywindowedgame", fullscreen: false, excluded, always));
+    }
+
+    [Fact]
+    public void Overlay_settings_normalize_drops_unknown_items_and_fixes_values()
+    {
+        var s = new OverlaySettings { Items = ["fps", "bogus", "fps", "cputemp"], Mode = "Weird", Corner = "Middle", Opacity = 5, Scale = 0.1, Hotkey = "X" }.Normalize();
+        Assert.Equal(["fps", "cputemp"], s.Items);
+        Assert.Equal("Games", s.Mode);
+        Assert.Equal("TopLeft", s.Corner);
+        Assert.Equal(1.0, s.Opacity);
+        Assert.Equal(0.7, s.Scale);
+        Assert.Equal("Ctrl+Shift+O", s.Hotkey);
+    }
+}

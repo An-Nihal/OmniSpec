@@ -3,20 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="OmniSpec overlay" SizeToContent="WidthAndHeight" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ShowActivated="False" ResizeMode="NoResize" Focusable="False" IsHitTestVisible="False"
-        FontFamily="{StaticResource Font.Mono}">
-    <Border Background="#B3000000" CornerRadius="8" Padding="10,6" Margin="12">
-        <StackPanel>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding FpsText}" FontSize="26" FontWeight="Bold" Foreground="#7CFC9A" />
-                <TextBlock Text=" FPS" FontSize="12" Foreground="#CCFFFFFF" VerticalAlignment="Bottom" Margin="0,0,10,4" />
-                <TextBlock Text="{Binding LowText}" FontSize="12" Foreground="#FFE0AF68" VerticalAlignment="Bottom" Margin="0,0,10,4" />
-                <TextBlock Text="{Binding FrameTimeText}" FontSize="12" Foreground="#CCFFFFFF" VerticalAlignment="Bottom" Margin="0,0,0,4" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding CpuText}" FontSize="12" Foreground="#FF7AA2F7" Margin="0,0,12,0" />
-                <TextBlock Text="{Binding GpuText}" FontSize="12" Foreground="#FFF7768E" />
-            </StackPanel>
-            <TextBlock Text="{Binding AppName}" FontSize="10" Foreground="#99FFFFFF" />
-        </StackPanel>
-    </Border>
+        WindowStartupLocation="Manual" Left="-10000" Top="-10000">
+    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource OverlayContent}" Margin="12" Focusable="False" />
 </Window>
