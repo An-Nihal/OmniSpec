@@ -43,11 +43,11 @@ modifications have been made.
 |---|---|---|---|
 | Intel PresentMon (console application) | 2.6.0 | MIT (Copyright Intel Corporation) | Shipped unmodified as `tools\PresentMon-2.6.0-x64.exe`, with its license in `tools\PresentMon-LICENSE.txt`. Source: https://github.com/GameTechDev/PresentMon. OmniSpec starts it as a child process only while capturing frames; it never installs the PresentMon service or SDK. |
 
-## Not redistributed: downloaded during setup at the user's choice
+## Included in the installer only
 
-| Component | License | Notes |
-|---|---|---|
-| PawnIO driver (`PawnIO_setup.exe` 2.2.0, by namazso) | GPL-2.0 | Optional signed kernel driver used by LibreHardwareMonitorLib for low-level sensors. **Not included in OmniSpec packages.** If the user keeps the installer option selected, setup downloads the official release from https://github.com/namazso/PawnIO.Setup/releases, verifies its SHA-256 and runs it. Source: https://github.com/namazso/PawnIO. The OmniSpec application never installs drivers. |
+| Component | Version | License | Notes |
+|---|---|---|---|
+| PawnIO driver setup (`PawnIO_setup.exe`, by namazso) | 2.2.0 | GNU GPL v2.0 | Signed kernel driver used by LibreHardwareMonitorLib for low-level sensors. Shipped **unmodified** inside the OmniSpec installer (not the portable zip), taken from the official release https://github.com/namazso/PawnIO.Setup/releases/tag/2.2.0 and verified by SHA-256 `1f519a22e47187f70a1379a48ca604981c4fcf694f4e65b734aaa74a9fba3032`. Installed silently by setup when not already present. Its license text is installed to `licenses\PawnIO-COPYING.txt`. **Corresponding source code:** https://github.com/namazso/PawnIO. OmniSpec's own code only communicates with the driver through LibreHardwareMonitorLib and is not a derivative of it. |
 
 ## Trademarks
 

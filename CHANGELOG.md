@@ -5,6 +5,14 @@ All notable changes to OmniSpec are documented in this file. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-10
+
+### Changed
+- **Sensor driver built into setup:** the installer now includes the PawnIO sensor driver and installs it silently
+  when missing. There is no separate download, checkbox or third-party installer window, and it works offline.
+- **Automatic administrator mode** is now always configured by the installer, with no checkbox. After the single
+  Windows confirmation when setup starts, nothing else asks for permission.
+
 ## [1.1.0] - 2026-11-10
 
 ### Added
@@ -76,6 +84,7 @@ All notable changes to OmniSpec are documented in this file. The format follows
   - **Installer:** an Inno Setup installer.
   - **Artifacts:** a portable zip and SHA-256 checksums.
 
-[Unreleased]: https://github.com/An-Nihal/OmniSpec/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/An-Nihal/OmniSpec/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/An-Nihal/OmniSpec/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/An-Nihal/OmniSpec/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/An-Nihal/OmniSpec/releases/tag/v1.0.0

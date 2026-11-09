@@ -39,13 +39,14 @@ Permission Required, Error*) and a data source you can see by hovering over it.
 
 Download the latest release from the **Releases** page:
 
-- `OmniSpec-<version>-win-x64-setup.exe`: installer (recommended). It installs to *Program Files* and sets up full
-  sensor access in one go. The options below are pre-selected:
-  - **Always run OmniSpec as administrator.** Windows confirms once during setup; after that OmniSpec starts with
-    full access without a UAC prompt.
-  - **Install the PawnIO sensor driver.** Needed for CPU temperature/power and motherboard fans/voltages. Setup
-    downloads the official, signed `PawnIO_setup.exe` 2.2.0, verifies its SHA-256 and runs it. The option is offered
-    only if PawnIO is not already installed.
+- `OmniSpec-<version>-win-x64-setup.exe`: installer (recommended). Install it like any app: after the standard
+  Windows confirmation at the start of setup, it sets up full sensor access automatically in the background:
+  - **Administrator access, configured automatically.** OmniSpec always starts with full access, with no UAC prompt
+    and no extra step.
+  - **Sensor driver, built into setup.** CPU temperature/power and motherboard fans/voltages need a kernel driver;
+    every hardware monitor ships one. OmniSpec setup includes the open-source, signed PawnIO driver (2.2.0, GPL-2.0)
+    and installs it silently when it is not already present. There is no separate step or third-party installer
+    window. It stays installed on uninstall because other monitoring tools share it.
   - Optional: a desktop icon and "start when I sign in".
 - `OmniSpec-<version>-win-x64-portable.zip`: self-contained `OmniSpec.exe` (no .NET runtime needed) plus the bundled
   PresentMon. The included `portable.txt` keeps settings and logs in a `data` folder next to the exe.
@@ -75,10 +76,10 @@ Some sensors need ring-0 hardware access or protected storage APIs:
 | Storage reliability counters, SMART/NVMe data and drive temperatures | CPU temperature, power and voltage. Motherboard Super I/O sensors (fans, pumps, voltages, VRM/chipset temperatures). RAM SPD temperatures |
 
 - **PawnIO** is an open-source (GPL-2.0), signed kernel driver used by LibreHardwareMonitor. The OmniSpec app itself
-  never installs drivers. The *installer* offers to install it (opt-out checkbox), and you can also get it from
-  <https://pawnio.eu/>. Without it, those sensors are left out, never shown as `0 °C`.
+  never installs drivers; the *installer* includes it and installs it silently. It is also available from
+  <https://pawnio.eu/>. With the portable zip and no PawnIO, those sensors are left out, never shown as `0 °C`.
 - **Restart as administrator** (sidebar or banner) elevates once via UAC.
-- **Automatic administrator mode** (installer checkbox, or *Settings › Hardware access › Always run as administrator*):
+- **Automatic administrator mode** (set up automatically by the installer; can be turned off in *Settings › Sensor access*):
   OmniSpec registers a Windows scheduled task, `\OmniSpec\OmniSpec (administrator)`, with "run with highest privileges".
   Windows asks for consent once; after that, OmniSpec always starts elevated **without a UAC prompt**, including from
   the Start menu and at sign-in. For security this is only allowed when OmniSpec is installed under *Program Files*.

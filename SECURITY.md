@@ -27,19 +27,19 @@ released, we are happy to credit you in the release notes unless you prefer to r
 
 Useful context when assessing OmniSpec's attack surface:
 
-- **Runs unelevated by default.** OmniSpec starts with standard user rights. Some sensors (for example CPU
-  temperature and power on many systems) need administrator rights; for those, the app offers an optional,
-  user-initiated restart as administrator. It never elevates on its own.
-- **Optional automatic administrator mode.** If the user opts in (installer checkbox "Always run OmniSpec as
-  administrator" or Settings › Hardware access), OmniSpec registers the scheduled task
+- **Privileges.** Installed copies start elevated through the scheduled task described below, because several
+  sensors (CPU temperature/power, motherboard sensors, SMART) require administrator rights. The portable build runs
+  with standard user rights and only elevates when the user starts an action that needs it (e.g. FPS capture).
+- **Automatic administrator mode.** The installer (which already runs elevated) sets this up; users can turn it off in
+  Settings › Sensor access. OmniSpec registers the scheduled task
   `\OmniSpec\OmniSpec (administrator)` with "run with highest privileges" for that user, so later starts need no UAC
   prompt. Creating the task always requires one UAC consent. To prevent privilege escalation, registration is refused
   unless `OmniSpec.exe` is located under Program Files (writable only by administrators); the installer therefore
   installs per-machine. The task is removed by the Settings toggle or on uninstall. Reports about weaknesses in this
   mechanism are especially welcome.
 - **The app never installs drivers.** The OmniSpec application does not install or bundle any kernel driver or
-  service. The *installer* offers an opt-out option to install the PawnIO sensor driver. It downloads the official
-  signed `PawnIO_setup.exe` from a pinned GitHub release URL, verifies a pinned SHA-256 hash, and only then runs it.
+  service. The *installer* bundles the official signed `PawnIO_setup.exe` 2.2.0 (fetched in CI from a pinned
+  release URL and verified against a pinned SHA-256) and installs it silently when PawnIO is not already present.
 - **PresentMon is bundled unmodified.** The Intel PresentMon console exe (signed by Intel) is fetched in CI from a
   pinned release, verified by SHA-256 and shipped in `tools\`. It runs only while the user captures FPS.
 - **No network access.** OmniSpec works offline. It has no telemetry, no update check, and makes no network

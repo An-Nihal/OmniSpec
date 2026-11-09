@@ -55,10 +55,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "startup"; Description: "Start OmniSpec when I sign in"; GroupDescription: "Startup:"; Flags: unchecked
-Name: "adminmode"; Description: "Always run OmniSpec as administrator (full sensor access, no UAC prompt on each start)"; GroupDescription: "Full sensor access:"
-Name: "pawnio"; Description: "Install the PawnIO sensor driver (CPU temperature, power, fans and voltages) - downloaded from its official release"; GroupDescription: "Full sensor access:"; Check: PawnIoMissing
 
 [Files]
+; PawnIO sensor driver setup (GPL-2.0, unmodified, by namazso; source: https://github.com/namazso/PawnIO).
+; Placed in installer\redist by the release workflow after SHA-256 verification. Installed silently only if missing.
+Source: "redist\PawnIO_setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: PawnIoMissing
+Source: "redist\PawnIO-COPYING.txt"; DestDir: "{app}\licenses"; Flags: ignoreversion
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
@@ -70,13 +72,11 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#AppName}"; ValueData: """{app}\{#AppExeName}"" --minimized"; Flags: uninsdeletevalue; Tasks: startup
 
 [Run]
-; PawnIO (GPL-2.0, by namazso) is not redistributed: it is downloaded from the official release during setup
-; (see [Code]), verified by SHA-256, and installed only if the user kept the "pawnio" task selected.
-Filename: "{tmp}\PawnIO_setup.exe"; Parameters: "-install"; StatusMsg: "Installing the PawnIO sensor driver..."; Flags: waituntilterminated skipifdoesntexist; Tasks: pawnio
+; The PawnIO sensor driver is part of OmniSpec's setup: installed silently (no extra window) when not already present.
+; It is left installed on uninstall because other monitoring tools share it.
+Filename: "{tmp}\PawnIO_setup.exe"; Parameters: "-install -silent"; StatusMsg: "Installing the sensor driver..."; Flags: runhidden waituntilterminated skipifdoesntexist; Check: PawnIoMissing
 ; Registers the scheduled task "\OmniSpec\OmniSpec (administrator)" for the installing user (runs elevated as part of setup).
-Filename: "{app}\{#AppExeName}"; Parameters: "--register-elevated-task --exit"; StatusMsg: "Configuring automatic administrator mode..."; Flags: runhidden waituntilterminated; Tasks: adminmode
-; Remove a previously registered task if the option was deselected on reinstall/upgrade.
-Filename: "{sys}\schtasks.exe"; Parameters: "/delete /tn ""\OmniSpec\OmniSpec (administrator)"" /f"; Flags: runhidden waituntilterminated; Tasks: not adminmode
+Filename: "{app}\{#AppExeName}"; Parameters: "--register-elevated-task --exit"; StatusMsg: "Configuring full sensor access..."; Flags: runhidden waituntilterminated
 ; Launches as the original (non-elevated) user; OmniSpec then hands off to the elevated task if it is registered.
 Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 
@@ -84,47 +84,8 @@ Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#AppName}}"; F
 Filename: "{sys}\schtasks.exe"; Parameters: "/delete /tn ""\OmniSpec\OmniSpec (administrator)"" /f"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveElevatedTask"
 
 [Code]
-const
-  PawnIoUrl = 'https://github.com/namazso/PawnIO.Setup/releases/download/2.2.0/PawnIO_setup.exe';
-  PawnIoSha256 = '1f519a22e47187f70a1379a48ca604981c4fcf694f4e65b734aaa74a9fba3032';
-
-var
-  DownloadPage: TDownloadWizardPage;
-
 function PawnIoMissing: Boolean;
 begin
-  { PawnIO registers itself as an installed program; the device exists once its driver is installed. }
+  { PawnIO registers itself under this key (the same check LibreHardwareMonitor uses). }
   Result := not RegKeyExists(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PawnIO');
-end;
-
-function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
-begin
-  Result := True;
-end;
-
-procedure InitializeWizard;
-begin
-  DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), 'Downloading the PawnIO sensor driver...', @OnDownloadProgress);
-end;
-
-function NextButtonClick(CurPageID: Integer): Boolean;
-begin
-  Result := True;
-  if (CurPageID = wpReady) and WizardIsTaskSelected('pawnio') then
-  begin
-    DownloadPage.Clear;
-    DownloadPage.Add(PawnIoUrl, 'PawnIO_setup.exe', PawnIoSha256);
-    DownloadPage.Show;
-    try
-      try
-        DownloadPage.Download;
-      except
-        if not DownloadPage.AbortedByUser then
-          SuppressibleMsgBox('PawnIO could not be downloaded (' + GetExceptionMessage + '). OmniSpec will be installed without it; you can re-run setup later to add it.',
-            mbInformation, MB_OK, IDOK);
-      end;
-    finally
-      DownloadPage.Hide;
-    end;
-  end;
 end;
